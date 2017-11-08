@@ -1,5 +1,7 @@
 import npyscreen
 import psutil
+import platform
+
 
 class PerformanceInformation:
     def __init__(self):
@@ -10,40 +12,52 @@ class PerformanceInformation:
             self.sensor = psutil.sensors_temperatures()
         else:
             self.sensor = None
-
         if hasattr(psutil, 'sensors_fans'):
             self.fans = psutil.sensors_fans()
         else:
             self.fans = None
 
-    def getVMInfo():
-        return psutil.virtual_memory()
-        
-        
+    def GetNewInfo(self):
+        self.VirtualMemory = psutil.virtual_memory()
+        self.NetworkInfo = psutil.net_io_counters()
+        if hasattr(psutil, 'sensors_temperatures'):
+            self.sensor = psutil.sensors_temperatures()
+        else:
+            self.sensor = None
+        if hasattr(psutil, 'sensors_fans'):
+            self.fans = psutil.sensors_fans()
+        else:
+            self.fans = None
+        return self
+
 
 class MainForm(npyscreen.Form):
     ThisPc = PerformanceInformation()
     def create(self):
         self.keypress_timeout = 10
-        self.CpuField = self.add(npyscreen.TitleText, name="CPU Count:\t", value = MainForm.ThisPc.CPUCount, editable=False)
-        self.VmField = self.add(npyscreen.TitleText, name="Virtual Memory %:\t", value = MainForm.ThisPc.VirtualMemory.percent, editable=False)
-        if(MainForm.ThisPc.sensor == None):
-            self.SensorField = self.add(npyscreen.TitleText, name="Sensors:", value = 'Cannot read sensors', editable=False)
-        else:
-            self.SensorField = self.add(npyscreen.TitleText, name="Sensors:", value = MainForm.ThisPc.sensor, editable=False)
-        if(MainForm.ThisPc.fans == None):
-            self.FanField = self.add(npyscreen.TitleText, name="Fans:", value = 'Cannot read fans', editable=False)
-        else:
-            self.FanField = self.add(npyscreen.TitleText, name="Fans:", value = MainForm.ThisPc.fans, editable=False)
+        self.PlatName = self.add(npyscreen.TitleText, name='OS:\t', value = platform.system() + " " + platform.release() , editable=False)
+        self.CpuField = self.add(npyscreen.TitleText, name="CPU COUNT:\t", value = MainForm.ThisPc.CPUCount , editable=False)
+        self.VmField = self.add(npyscreen.TitleText, name="VIRTUALMEM%:\t", value = None, editable=False)
+        self.SensorField = self.add(npyscreen.TitleText, name="SENSORS:", value = None, editable=False)
+        self.FanField = self.add(npyscreen.TitleText, name="FANS:", value = None, editable=False)
     
-    
-
     def afterEditing(self):
         self.parentApp.setNextForm(None)
     
-    def while_waiting(self, ):
-        self.VmField = MainForm.ThisPc.getVMInfo
+    def while_waiting(self):
+        UpdatedPcInfo = MainForm.ThisPc.GetNewInfo()
+        self.VmField.value = UpdatedPcInfo.VirtualMemory.percent
         self.VmField.display()
+        if(UpdatedPcInfo.sensor == None):
+            self.SensorField.value = 'CANNOT READ SENSORS'
+        else:
+            self.SensorField.value = UpdatedPcInfo.sensor
+        if(UpdatedPcInfo.fans == None):
+            self.FanField.value = 'CANNOT READ FANS'
+        else:
+            self.FanField.value = UpdatedPcInfo.fans
+        self.FanField.display()
+        self.SensorField.display()
         
         
 
