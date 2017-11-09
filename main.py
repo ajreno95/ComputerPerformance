@@ -1,6 +1,21 @@
 import npyscreen
 import psutil
 import platform
+from tqdm import tqdm
+
+def ProgBar(status):
+    prog = int(status/2)
+    bar = '['
+    for i in range(1,prog):
+        bar += '#'
+    for i in range(len(bar), 50):
+        bar += ' ' 
+    bar += '] '    
+    bar += str(status)
+    bar += '%'
+    return bar
+    
+
 
 
 class PerformanceInformation:
@@ -40,13 +55,14 @@ class MainForm(npyscreen.Form):
         self.VmField = self.add(npyscreen.TitleText, name="VIRTUALMEM%:\t", value = None, editable=False)
         self.SensorField = self.add(npyscreen.TitleText, name="SENSORS:", value = None, editable=False)
         self.FanField = self.add(npyscreen.TitleText, name="FANS:", value = None, editable=False)
-    
+
     def afterEditing(self):
         self.parentApp.setNextForm(None)
     
     def while_waiting(self):
         UpdatedPcInfo = MainForm.ThisPc.GetNewInfo()
-        self.VmField.value = UpdatedPcInfo.VirtualMemory.percent
+        
+        self.VmField.value = ProgBar(UpdatedPcInfo.VirtualMemory.percent)
         self.VmField.display()
         if(UpdatedPcInfo.sensor == None):
             self.SensorField.value = 'CANNOT READ SENSORS'
